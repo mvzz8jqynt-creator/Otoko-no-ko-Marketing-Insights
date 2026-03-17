@@ -1,0 +1,22 @@
+# 必要なライブラリ一覧
+# 個人利用目的のみ
+
+# データ収集
+requests
+python-dotenv
+tweepy
+
+# データ分析
+pandas
+numpy
+scikit-learn
+
+# 可視化
+plotly
+matplotlib
+
+# Webダッシュボード
+flask
+
+# SEO・キーワード分析
+pytrends
