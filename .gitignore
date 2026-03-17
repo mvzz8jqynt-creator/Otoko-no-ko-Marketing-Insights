@@ -1,0 +1,23 @@
+# Pythonキャッシュ
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# 仮想環境
+venv/
+.venv/
+env/
+
+# 環境変数ファイル（APIキー管理）
+.env
+
+# IDEファイル
+.vscode/
+.idea/
+
+# macOSファイル
+.DS_Store
+
+# ログファイル
+*.log
