@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タグ分析 - 男の娘 Insights</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- ナビゲーションバー -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">
+      <i class="bi bi-bar-chart-fill me-2"></i>男の娘 Insights
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/"><i class="bi bi-house me-1"></i>ホーム</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/trends"><i class="bi bi-graph-up me-1"></i>トレンド</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/tags"><i class="bi bi-tags me-1"></i>タグ分析</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/suggest"><i class="bi bi-lightbulb me-1"></i>ネタ提案</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid mt-4 px-4">
+
+  <!-- ページヘッダー -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2><i class="bi bi-tags-fill me-2 text-info"></i>タグ分析</h2>
+      <p class="text-muted">
+        最終更新: {{ last_updated }}
+        {% if total_tags %}
+        <span class="badge bg-info text-dark ms-2">総タグ数: {{ total_tags }}</span>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- タグ頻度 TOP 20 -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-bar-chart-fill me-2 text-info"></i>タグ出現頻度 TOP 20
+        </div>
+        <div class="card-body p-0">
+          {% if top_tags %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th>ランク</th>
+                  <th>タグ</th>
+                  <th>出現回数</th>
+                  <th>頻度バー</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set max_count = top_tags[0].count if top_tags else 1 %}
+                {% for tag in top_tags %}
+                <tr>
+                  <td><span class="badge bg-info text-dark">{{ tag.rank }}</span></td>
+                  <td><strong>{{ tag.tag }}</strong></td>
+                  <td>{{ tag.count }}</td>
+                  <td style="min-width: 120px;">
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-info"
+                           style="width: {{ (tag.count / max_count * 100)|int }}%">
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="p-3 text-muted">
+            データがありません。analyze_tags.py を実行してください。
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- タグクラウド風表示 -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-cloud-fill me-2 text-primary"></i>タグクラウド
+        </div>
+        <div class="card-body">
+          {% if top_tags %}
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            {% set max_count = top_tags[0].count if top_tags else 1 %}
+            {% for tag in top_tags %}
+            {% set font_size = 0.7 + (tag.count / max_count) * 1.3 %}
+            <span class="badge bg-primary"
+                  style="font-size: {{ font_size }}rem; opacity: {{ 0.4 + (tag.count / max_count) * 0.6 }};">
+              {{ tag.tag }}
+            </span>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted">データがありません。</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 共起分析 -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-diagram-2-fill me-2 text-success"></i>タグ共起分析（よく一緒に使われるタグ）
+        </div>
+        <div class="card-body p-0">
+          {% if cooccurrence %}
+          <table class="table table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>タグペア</th>
+                <th>共起回数</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in cooccurrence %}
+              <tr>
+                <td>
+                  {% set parts = item.pair.split(",") %}
+                  <span class="badge bg-success me-1">{{ parts[0] if parts|length > 0 else '' }}</span>
+                  <i class="bi bi-plus-circle text-muted"></i>
+                  <span class="badge bg-info text-dark ms-1">{{ parts[1] if parts|length > 1 else '' }}</span>
+                </td>
+                <td>{{ item.count }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="p-3 text-muted">
+            データがありません。複数タグ付きのコンテンツが必要です。
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- SEO推薦タグ -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-search me-2 text-warning"></i>SEO最適化推薦タグ
+        </div>
+        <div class="card-body">
+          {% if seo_tags %}
+          <div class="d-flex flex-wrap gap-2">
+            {% for tag in seo_tags %}
+            <span class="badge bg-warning text-dark">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          <p class="text-muted small mt-3">
+            <i class="bi bi-info-circle me-1"></i>
+            これらのタグを動画の説明欄やタイトルに含めることでSEO効果が期待できます。
+          </p>
+          {% else %}
+          <p class="text-muted">
+            データがありません。keyword_suggestions.py を実行してください。
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

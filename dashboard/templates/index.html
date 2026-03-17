@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>男の娘 マーケティングダッシュボード</title>
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- カスタムスタイル -->
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- ナビゲーションバー -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">
+      <i class="bi bi-bar-chart-fill me-2"></i>男の娘 Insights
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link active" href="/"><i class="bi bi-house me-1"></i>ホーム</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/trends"><i class="bi bi-graph-up me-1"></i>トレンド</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/tags"><i class="bi bi-tags me-1"></i>タグ分析</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/suggest"><i class="bi bi-lightbulb me-1"></i>ネタ提案</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- メインコンテンツ -->
+<div class="container-fluid mt-4 px-4">
+
+  {% if suggest_mode %}
+  <!-- ネタ提案モード -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2><i class="bi bi-lightbulb-fill text-warning me-2"></i>次回ネタ提案</h2>
+      <p class="text-muted">AIトレンド分析に基づく動画制作ネタ候補</p>
+    </div>
+  </div>
+
+  <div class="row">
+    {% for suggestion in suggestions %}
+    <div class="col-md-4 mb-4">
+      <div class="card border-warning h-100">
+        <div class="card-header bg-warning bg-opacity-10">
+          <h5 class="mb-0"><i class="bi bi-star me-2"></i>候補 {{ suggestion.rank }}</h5>
+        </div>
+        <div class="card-body">
+          <h6 class="card-title">{{ suggestion.title_idea }}</h6>
+          <p class="card-text text-muted small">{{ suggestion.reason }}</p>
+          <div class="mt-2">
+            {% for tag in suggestion.tags %}
+            <span class="badge bg-secondary me-1 mb-1">{{ tag.tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-info">
+        トレンドデータを収集してください。スクリプトを実行するとネタ候補が表示されます。
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-clock me-2"></i>最適投稿タイミング</div>
+        <div class="card-body">
+          <p class="fs-5 fw-bold text-primary">{{ optimal_time }}</p>
+          <p class="text-muted small">エンゲージメントが高い投稿時間帯</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-search me-2"></i>トレンドキーワード</div>
+        <div class="card-body">
+          {% for item in trending_keywords %}
+          <div class="mb-2">
+            <span class="fw-bold">{{ item.category }}:</span>
+            {% for kw in item.keywords[:5] %}
+            <span class="badge bg-info text-dark me-1">{{ kw }}</span>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted">データなし</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- 通常ダッシュボード表示 -->
+
+  <!-- ページヘッダー -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2><i class="bi bi-speedometer2 me-2"></i>ダッシュボード</h2>
+      <p class="text-muted">最終更新: {{ last_updated }}</p>
+    </div>
+  </div>
+
+  <!-- サマリーカード行 -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card text-center summary-card">
+        <div class="card-body">
+          <i class="bi bi-tags-fill fs-2 text-primary"></i>
+          <h5 class="mt-2">{{ top_tags|length }}</h5>
+          <p class="text-muted mb-0 small">分析タグ数</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center summary-card">
+        <div class="card-body">
+          <i class="bi bi-film fs-2 text-success"></i>
+          <h5 class="mt-2">{{ top_videos|length }}</h5>
+          <p class="text-muted mb-0 small">TOP動画</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center summary-card">
+        <div class="card-body">
+          <i class="bi bi-arrow-up-circle-fill fs-2 text-warning"></i>
+          <h5 class="mt-2">{{ growing_genres|length }}</h5>
+          <p class="text-muted mb-0 small">上昇中ジャンル</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center summary-card">
+        <div class="card-body">
+          <i class="bi bi-person-fill fs-2 text-danger"></i>
+          <h5 class="mt-2">{{ creator_count }}</h5>
+          <p class="text-muted mb-0 small">追跡クリエイター</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- タグTOP5 & 動画ランキング -->
+  <div class="row g-4 mb-4">
+    <!-- タグTOP5 -->
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-tags-fill me-2 text-primary"></i>人気タグ TOP 5</span>
+          <a href="/tags" class="btn btn-sm btn-outline-primary">詳細</a>
+        </div>
+        <div class="card-body p-0">
+          {% if top_tags %}
+          <ul class="list-group list-group-flush">
+            {% for tag in top_tags %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span><span class="badge bg-primary me-2">{{ tag.rank }}</span>{{ tag.tag }}</span>
+              <span class="badge bg-light text-dark">{{ tag.count }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="p-3 text-muted">
+            データがありません。analyze_tags.py を実行してください。
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- 動画ランキング -->
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-film me-2 text-success"></i>再生数 TOP 5</span>
+          <a href="/trends" class="btn btn-sm btn-outline-success">詳細</a>
+        </div>
+        <div class="card-body p-0">
+          {% if top_videos %}
+          <ul class="list-group list-group-flush">
+            {% for video in top_videos %}
+            <li class="list-group-item">
+              <div class="d-flex justify-content-between">
+                <span><span class="badge bg-success me-2">{{ video.rank }}</span>{{ video.title }}</span>
+                <span class="badge bg-light text-dark">{{ "{:,}".format(video.views) if video.views else "N/A" }}</span>
+              </div>
+              <div class="text-muted small mt-1">{{ video.category }} | {{ video.platform }}</div>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="p-3 text-muted">
+            データがありません。category_ranking.py を実行してください。
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 上昇中ジャンル -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-arrow-up-circle-fill me-2 text-warning"></i>今後3ヶ月で伸びそうなジャンル
+        </div>
+        <div class="card-body">
+          {% if growing_genres %}
+          <div class="row g-3">
+            {% for genre in growing_genres %}
+            <div class="col-6 col-md-2">
+              <div class="card text-center border-warning">
+                <div class="card-body p-2">
+                  <div class="fw-bold">{{ genre.tag }}</div>
+                  <div class="text-success small">+{{ genre.growth_rate }}%</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">
+            データがありません。predict_trends.py を実行してください。
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- クイックアクションボタン -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5>クイックアクション</h5>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/trends" class="btn btn-outline-primary">
+          <i class="bi bi-graph-up me-1"></i>トレンド詳細
+        </a>
+        <a href="/tags" class="btn btn-outline-info">
+          <i class="bi bi-tags me-1"></i>タグ分析
+        </a>
+        <a href="/suggest" class="btn btn-outline-warning">
+          <i class="bi bi-lightbulb me-1"></i>ネタ提案
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div><!-- end container -->
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
